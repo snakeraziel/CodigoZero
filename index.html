@@ -1,96 +1,91 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Código Zero</title>
-<style>
-:root {
-  --bg:#0f172a; --card:#1e293b; --accent:#3b82f6; --success:#22c55e; --text:#f1f5f9;
-}
-body{margin:0;padding:15px;font-family:system-ui;background:var(--bg);color:var(--text)}
-.container{max-width:520px;margin:auto}
-h2{text-align:center;color:var(--accent);font-size:1.2rem}
-.upload-area{border:2px dashed var(--accent);padding:20px;text-align:center;border-radius:12px;background:var(--card);margin-bottom:15px}
-.btn{width:100%;padding:14px;border-radius:10px;border:none;font-weight:700;font-size:1rem;margin-top:10px}
-.btn-upload{background:var(--accent);color:#fff}
-.btn-apply{background:var(--success);color:#fff}
-.search-box{
-  display:flex;
-  gap:10px;
-  margin-bottom:15px;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SITE EM CONSTRUÇÃO</title>
+    <style>
+        /* CSS DA CAPA DE PROTEÇÃO */
+        #capa-secreta {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: #000; color: #b19cd9;
+            font-family: 'Arial Black', sans-serif; text-align: center;
+            z-index: 9999; overflow: hidden;
+            animation: alertaEscarlate 0.7s infinite;
+        }
 
-.search-box{
-  display:flex;
-  gap:10px;
-  margin-bottom:15px;
-  align-items:center;   /* 👈 alinha no mesmo nível */
-}
+        @keyframes alertaEscarlate {
+            0% { background-color: #000; }
+            100% { background-color: #d60606; }
+        }
 
-.search-box input,
-.search-box .btn-search{
-  flex:1;
-  height:48px;              /* 👈 altura fixa */
-  padding:0 12px;          /* padding só lateral */
-  border-radius:10px;
-  border:1px solid #334155;
-  font-size:1rem;
-  box-sizing:border-box;   /* evita diferença por borda */
-}
+        .aviso h1 { font-size: 2.5em; margin: 0; color: #b19cd9; line-height: 1.1; }
+        .aviso p { font-size: 1.5em; font-weight: bold; margin-top: 10px; }
+        .icones { font-size: 4em; margin-top: 20px; cursor: default; }
 
-.search-box input{
-  background:#020617;
-  color:#fff;
-}
+        /* BOTÃO INVISÍVEL */
+        #portal-invisivel {
+            position: absolute;
+            bottom: 20%; width: 150px; height: 100px;
+            background: transparent; border: none; outline: none;
+            cursor: default; z-index: 10000;
+        }
 
-.search-box .btn-search{
-  background:#334155;
-  color:#fff;
-}
-#painelCliente{display:none;background:var(--card);padding:15px;border-radius:12px;border:1px solid #334155}
-.info-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:.9rem}
-.label{color:#94a3b8}.val{font-weight:700;color:#fde047}
-.history-item{background:#334155;padding:10px;border-radius:8px;margin-bottom:6px;font-size:.8rem;display:flex;justify-content:space-between}
-small{color:#94a3b8}
-</style>
+        /* OCULTAR O PROJETO AURA INICIALMENTE */
+        #projeto-aura-content { display: none; }
+
+        /* REGRAS DO PROJETO AURA (O seu Código Zero que você criou) */
+        :root { --bg:#0f172a; --card:#1e293b; --accent:#3b82f6; --success:#22c55e; --text:#f1f5f9; }
+        .aura-body { background: var(--bg); color: var(--text); font-family: system-ui; padding: 15px; margin: 0; }
+        /* ... (Mantenha o resto do seu CSS do Projeto Aura aqui dentro) ... */
+    </style>
 </head>
 <body>
 
-<div class="container">
-<h2>PROJETO AURA – CÓDIGO ZERO</h2>
+    <div id="capa-secreta">
+        <div class="aviso">
+            <h1>SITE AINDA EM CONSTRUÇÃO.</h1>
+            <p>VOLTE EM OUTRO DIA!</p>       
+            <div class="icones">⚠️ 🚧 🛠️ ⚠️</div>
+        </div>
+        <button id="portal-invisivel" onclick="acessarProjeto()"></button>
+    </div>
 
-<div class="upload-area">
-  <small id="nomeArquivo">Nenhum arquivo carregado</small><p>
-  <label class="btn btn-upload">
-    📂 CARREGAR TXT
-    <input type="file" id="inputTxt" accept=".txt" hidden>
-  </label>
-</div>
+    <div id="projeto-aura-content" class="aura-body">
+        <div style="max-width:520px; margin: auto;">
+            <h2 style="text-align:center; color:#3b82f6;">PROJETO AURA – CÓDIGO ZERO</h2>
+            <p style="text-align:center; font-size: 0.8rem; color:#94a3b8;">Acesso Autorizado - Bem-vindo, Kallel.</p>
+        </div>
+    </div>
 
-<div class="search-box">
-  <input id="idBusca" placeholder="Nome do Cliente ou Nº Medidor" inputmode="numeric">
-  <button class="btn btn-search" onclick="buscar()">🔍</button>
-</div>
+    <script>
+        // 1. LÓGICA DA CAPA
+        setTimeout(() => {
+            const capa = document.getElementById('capa-secreta');
+            if(capa) {
+                capa.style.animation = "none";
+                capa.style.backgroundColor = "#d60606";
+            }
+        }, 60000);
 
-<div id="painelCliente">
-  <div id="nomeCliente" style="color:var(--accent);font-weight:800;margin-bottom:10px"></div>
-  <div class="info-row"><span class="label">Medidor:</span><span class="val" id="valMedidor"></span></div>
-  <div class="info-row"><span class="label">Última leitura:</span><span class="val" id="valULeitura"></span></div>
-  <div class="info-row"><span class="label">Média anterior:</span><span class="val" id="valMediaAnt"></span></div>
-  <div class="info-row"><span class="label">Nova leitura (simulação):</span><span class="val" id="valNova"></span></div>
-  <button class="btn btn-apply" onclick="aplicarMedia()">✅ APLICAR MÉDIA</button>
-</div>
+        // 2. LÓGICA DE ACESSO
+        function acessarProjeto() {
+            const senha = prompt("ACESSO RESTRITO: Digite a chave mestra:");
+            
+            // Defina sua senha aqui (ex: 93acertos)
+            if (senha === "93") { 
+                document.getElementById('capa-secreta').style.display = "none";
+                document.getElementById('projeto-aura-content').style.display = "block";
+                document.body.style.backgroundColor = "#0f172a"; // Cor do Projeto Aura
+                alert("Aura: Acesso concedido. Bom trabalho.");
+            } else {
+                alert("ERRO FATAL: Chave incorreta.");
+            }
+        }
 
-<div style="margin-top:15px">
-  <small>ÚLTIMAS 3 MÉDIAS APLICADAS (DESTE CLIENTE)</small>
-  <div id="listaHistorico"></div>
-</div>
-
-</div>
-
-<script>
-let base = [];
+        let base = [];
 
 document.getElementById('inputTxt').addEventListener('change', e => {
   const file = e.target.files[0];
@@ -220,8 +215,6 @@ function renderHistoricoCliente(nc) {
   });
 }
 
-</script>
-
-
+    </script>
 </body>
 </html>
