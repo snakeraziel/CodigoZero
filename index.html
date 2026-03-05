@@ -88,6 +88,11 @@
                 <button class="btn-search" onclick="buscar()">BUSCAR 🔍</button>
             </div>
 
+<div class="search-box">
+    <input id="busca" placeholder="Cliente por Email, GD, Desativado">
+    <button class="btn-search" onclick="buscarCliente()">BUSCAR 🔎</button>
+</div>
+
             <div id="painelCliente">
                 <div id="nomeCliente" style="color:var(--accent); font-weight:800; margin-bottom:10px; font-size: 1.1rem;"></div>
                 <div class="info-row"><span class="label">Medidor:</span><span class="val" id="valMedidor"></span></div>
@@ -117,7 +122,9 @@
             }
         }, 60000);
 
-
+let clientes = [];
+let clienteAtual = null;
+let ultimaLeitura = 0;
 
 const proverbios = [
 "O que prepara o seu caminho com prudência terá sucesso.<br>(Provérbios 16:3)",
@@ -226,35 +233,32 @@ function acessarProjeto() {
 
 
         // --- LÓGICA DO PROJETO AURA ---
-        let base = [];
 
- document.getElementById('inputTxt').addEventListener('change', e => {
+document.getElementById('inputTxt').addEventListener('change', e => {
     const file = e.target.files[0];
     const reader = new FileReader();
 
     reader.onload = ev => {
         const linhas = ev.target.result.split(/\r?\n/);
 
+        // Aqui a mágica acontece: mapeamos a base uma única vez de forma correta
         base = linhas.map(linha => {
             if (!linha || !linha.includes(';')) return null;
 
             const limpa = linha.replace(/\r/g, '');
             const p = limpa.split(';');
 
-            // Mapeamento Principal
+            // Pegamos os dados pelas posições fixas (índices) que não mentem
             const nc = p[0]?.trim();
             const nome = p[15]?.trim();
-            const medidor = p.find(x => x && x.includes('-')) || '';
-            const idxSim = p.findIndex(x => x === 'Sim');
+            const medidorFull = p[30]?.trim() || ''; 
+            const medidor = medidorFull.split('-')[0];
             
-            let uLeitura = '', mediaAnt = '';
-            if (idxSim !== -1) {
-                uLeitura = p[idxSim + 1] || '';
-                mediaAnt = p[idxSim + 2] || '';
-            }
+            // INDEPENDENTE de "Sim" ou "Nao", a leitura e média estão aqui:
+            const uLeitura = p[32]?.trim() || '0';
+            const mediaAnt = p[33]?.trim() || '0';
 
-            // --- CORREÇÃO DAS COORDENADAS ---
-            // Captura lat e lng das colunas 50 e 51 (índices 49 e 50)
+            // Coordenadas
             const lat = p[49]?.trim();
             const lng = p[50]?.trim();
 
@@ -263,24 +267,65 @@ function acessarProjeto() {
                 nc, 
                 nome, 
                 medidor, 
-                uLeitura: uLeitura.trim(), 
-                mediaAnt: mediaAnt.trim(),
-                lat: lat, // Adicionado explicitamente
-                lng: lng  // Adicionado explicitamente
+                uLeitura, 
+                mediaAnt,
+                lat,
+                lng 
             };
         }).filter(Boolean);
 
         document.getElementById('nomeArquivo').innerText = `Base: ${file.name} (${base.length} registros)`;
-        alert("Aura: Base atualizada com coordenadas!");
+        alert("Aura: Base carregada e mapeada com sucesso!");
     };
     reader.readAsText(file, "UTF-8");
 });
 
+    reader.onload = ev => {
+    const linhas = ev.target.result.split(/\r?\n/);
 
+    base = linhas.map(linha => {
+        if (!linha || !linha.includes(';')) return null;
+
+        const limpa = linha.replace(/\r/g, '');
+        const p = limpa.split(';');
+
+        // MAPEAMENTO POR ÍNDICES FIXOS (Mais seguro para Email/GD)
+        const nc = p[0]?.trim();
+        const nome = p[15]?.trim();
+        const medidorFull = p[30]?.trim() || ''; // Ex: 11529290-ELE-725
+        const medidor = medidorFull.split('-')[0]; // Pega só o número antes do traço
+        
+        // LEITURA E MÉDIA (Posições 32 e 33 da string)
+        const uLeitura = p[32]?.trim() || '0';
+        const mediaAnt = p[33]?.trim() || '0';
+
+        // COORDENADAS (Posições 49 e 50)
+        const lat = p[49]?.trim();
+        const lng = p[50]?.trim();
+
+        return { 
+            linha: limpa.toUpperCase(), 
+            nc, 
+            nome, 
+            medidor, 
+            uLeitura, 
+            mediaAnt,
+            lat,
+            lng 
+        };
+    }).filter(Boolean);
+
+    document.getElementById('nomeArquivo').innerText = `Base: ${file.name} (${base.length} registros)`;
+    alert("Aura: Base mapeada com sucesso!");
+};
+
+
+// --- BUSCA UNIFICADA (Melhorada) ---
 function buscar() {
     const termo = document.getElementById('idBusca').value.trim().toUpperCase();
     if (!termo) return alert("Digite algo.");
     
+    // Procura na 'base' que foi carregada pelo arquivo TXT
     const c = base.find(item => item.linha.includes(termo));
     if (!c) return alert("Nada encontrado.");
 
@@ -288,12 +333,12 @@ function buscar() {
     const m = parseInt((c.mediaAnt || '').replace(/\D/g, '')) || 0;
     const nova = u + m;
 
-    // --- TRATAMENTO DAS COORDENADAS PARA O GOOGLE MAPS ---
-    // Substituí a vírgula decimal por ponto para o GPS entender
-    const latFix = (c.lat || '').replace(',', '.');
-    const lngFix = (c.lng || '').replace(',', '.');
+    // Tratamento de Coordenadas
+    const latFix = (c.lat || '').replace(',', '.').trim();
+    const lngFix = (c.lng || '').replace(',', '.').trim();
     const coordsGoogle = `${latFix},${lngFix}`;
 
+    // Preenchimento do Painel
     document.getElementById('painelCliente').style.display = 'block';
     document.getElementById('nomeCliente').innerText = c.nome || '(sem nome)';
     document.getElementById('valMedidor').innerText = c.medidor || '-';
@@ -303,15 +348,14 @@ function buscar() {
     
     const elCoord = document.getElementById('valCoord');
     if(elCoord) {
-        // Exibe com a vírgula original para o utilizador ler como no TXT
-        elCoord.innerText = `${c.lat}, ${c.lng}`;
-        
-        // No clique, envia à coordenada do Google Maps
+        elCoord.innerText = (latFix && lngFix) ? `${c.lat}, ${c.lng}` : "Não disponível";
         elCoord.style.color = "#3b82f6";
         elCoord.style.textDecoration = "underline";
+        elCoord.style.cursor = "pointer";
+        
         elCoord.onclick = () => {
             if(latFix && lngFix) {
-                // Link oficial para abrir no GPS
+                // Link oficial para abrir direto no App do GPS
                 window.open(`https://www.google.com/maps/search/?api=1&query=${coordsGoogle}`, '_blank');
             } else {
                 alert("Coordenadas inválidas para este cliente.");
@@ -321,6 +365,57 @@ function buscar() {
 
     renderHistoricoCliente(c.nc);
     document.getElementById('painelCliente').dataset.nc = c.nc;
+}
+
+
+function buscarCliente() {
+    const termo = document.getElementById("busca").value.trim().toUpperCase();
+    if (!termo) return;
+
+    // Busca na base (ou base.linha se você usou o mapeamento do reader)
+    const item = base.find(i => (i.linha || i).includes(termo));
+
+    if (!item) {
+        alert("Cliente não encontrado.");
+        return;
+    }
+
+    // Pega a linha bruta
+    const linhaBruta = item.linha || item;
+    const campos = linhaBruta.split(";");
+
+    // MAPEAMENTO FORÇADO
+    const nc = campos[0] ? campos[0].trim() : "N/A";
+    const nome = campos[15] ? campos[15].trim() : "—";
+    
+    // Medidor (Coluna 30)
+    const medidorFull = campos[30] || "";
+    const medidor = medidorFull.split("-")[0].trim();
+    
+    // Leitura e Média (Colunas 32 e 33)
+    const leitura = parseInt(campos[32]) || 0; 
+    const media = parseInt(campos[33]) || 0; 
+    const simulacao = leitura + media;
+
+    // ALIMENTAÇÃO DA TELA
+    document.getElementById("nomeCliente").innerText = nome;
+    document.getElementById("valMedidor").innerText = medidor;
+    document.getElementById("valULeitura").innerText = leitura;
+    document.getElementById("valMediaAnt").innerText = media;
+    document.getElementById("valNova").innerText = simulacao;
+    
+    // Força a exibição do NC se o campo existir
+    const campoNC = document.getElementById("valNC");
+    if (campoNC) campoNC.innerText = nc;
+
+    // DATASET PARA O HISTÓRICO
+    const painel = document.getElementById('painelCliente');
+    painel.style.display = "block";
+    painel.dataset.nc = nc;
+
+    console.log("Aura detectou NC:", nc); // Verifique no F12
+    
+    renderHistoricoCliente(nc);
 }
 
 
@@ -360,6 +455,44 @@ function buscar() {
                 box.appendChild(d);
             });
         }
+
+/* function buscarManual(){
+
+const termo = document.getElementById('idBuscaManual').value.trim().toUpperCase();
+
+if(!termo) return alert("Digite algo.");
+
+const c = base.find(item => item.linha.includes(termo));
+
+if(!c) return alert("Nada encontrado.");
+
+const ultima = parseInt((c.uLeitura || '').replace(/\D/g,'')) || 0;
+
+const mediaDigitada = prompt("Digite a média deste cliente:");
+
+if(!mediaDigitada) return;
+
+const media = parseInt(mediaDigitada);
+
+if(isNaN(media)) return alert("Média inválida.");
+
+const nova = ultima + media;
+
+document.getElementById('painelCliente').style.display = 'block';
+
+document.getElementById('nomeCliente').innerText = c.nome || "(sem nome)";
+document.getElementById('valMedidor').innerText = c.medidor || "-";
+document.getElementById('valULeitura').innerText = ultima;
+document.getElementById('valMediaAnt').innerText = media;
+document.getElementById('valNova').innerText = nova;
+
+document.getElementById('painelCliente').dataset.nc = c.nc;
+
+renderHistoricoCliente(c.nc);
+
+} */
+
+
     </script>
 </body>
 </html>
