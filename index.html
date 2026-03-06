@@ -75,13 +75,22 @@
         <div class="container">
             <h2 style="text-align:center; color:var(--accent); letter-spacing: 1px;">PROJETO AURA</h2>
 
-            <div class="upload-area-aura">
-                <small id="nomeArquivo">Nenhum arquivo carregado</small>
-                <p><label class="btn btn-upload">
-                    📂 CARREGAR 📂
-                    <input type="file" id="inputTxt" accept=".txt" hidden>
-                </label>
-            </div>
+<div class="upload-area-aura">
+    <small id="nomeArquivo">Nenhum arquivo carregado</small>
+
+    <p>
+        <span id="btnCamera" style="cursor:pointer; font-size:25px; margin-right:65px;">👁</span>
+
+        <label class="btn btn-upload">
+            📂 CARREGAR 📂
+            <input type="file" id="inputTxt" accept=".txt" hidden>
+        </label>
+
+<button onclick="abrirBloco()" style="background:none;border:none;font-size:25px;margin-left:65px;">
+📃
+</button
+    </p>
+</div>
 
     <!--       <div class="search-box">
                 <input id="idBusca" placeholder="Nome, N° Cliente ou Medidor" inputmode="text">
@@ -100,11 +109,11 @@
     <div class="info-row"><span class="label">Última Leitura:</span><span class="val" id="valULeitura"></span></div>
     <div class="info-row"><span class="label">Média Anterior:</span><span class="val" id="valMediaAnt"></span></div>
     <div class="info-row"><span class="label">Nova Leitura (Simulação):</span><span class="val" id="valNova" style="color: #22c55e;"></span></div>
-    <div class="info-row"><span class="label">Procedimento de Entrega:</span><span class="val" id="valProcEntrega"></span></div>
+    <div class="info-row"><span class="label">Forma de Entrega:</span><span class="val" id="valProcEntrega"></span></div>
     <div class="info-row"><span class="label">Código Principal:</span><span class="val" id="valCodPrincipal"></span></div>
     <div class="info-row"><span class="label">Código Secundário:</span><span class="val" id="valCodSecundario"></span></div>
     <div class="info-row"><span class="label">Coordenadas:</span><span class="val" id="valCoord"></span></div>
-    <button class="btn btn-apply" onclick="aplicarMedia()">✅ APLICAR MÉDIA</button>
+    <button class="btn btn-apply" onclick="aplicarMedia()">✅ SALVAR HISTÓRICO</button>
 </div>
 
 
@@ -197,6 +206,31 @@ function mostrarProverbio() {
     document.body.appendChild(msg);
 }
 
+
+let cameraAtiva = false;
+let streamCamera = null;
+
+const btnCamera = document.getElementById("btnCamera");
+
+btnCamera.onclick = async () => {
+    if (!cameraAtiva) {
+        try {
+            streamCamera = await navigator.mediaDevices.getUserMedia({ video: true });
+            btnCamera.textContent = "🔴";
+            btnCamera.title = "Parar gravação";
+            cameraAtiva = true;
+        } catch (erro) {
+            alert("Câmera não permitida ou indisponível.");
+        }
+    } else {
+        streamCamera.getTracks().forEach(track => track.stop());
+        btnCamera.textContent = "👁";
+        btnCamera.title = "Iniciar gravação";
+        cameraAtiva = false;
+    }
+};
+
+
   // --- LÓGICA DE ACESSO ---
 
 function acessarProjeto() {
@@ -225,9 +259,9 @@ function acessarProjeto() {
     if (!vipsDecodificados.includes(idLimpo)) {
         document.getElementById('projeto-aura-content').innerHTML = `
             <div style="max-width:520px; margin: 100px auto; text-align:center;">
-                <h2 style="color:#3b82f6; opacity: 0.5;">PROJETO AURA</h2>
-                <p style="color:#94a3b8; font-style: italic;">Status: Servidor em manutenção programada.</p>
-                <p style="color:#475569; font-size: 0.8rem; margin-top: 50px;">AMIGO LEITURISTA, SEJA BEM VINDO!<br>PROJETO EM CONSTRUÇÃO...</p>
+                <h2 style="color:#3b82f6; opacity: 0.5;">PROJETO SECRETO AURA</h2>
+                <p style="color:#94a3b8; font-style: italic;">Servidor em manutenção programada.</p>
+                <p style="color:#475569; font-size: 0.8rem; margin-top: 50px;">AMIGO LEITURISTA, PROJETO EM CONSTRUÇÃO...</p>
             </div>
         `;
         console.log("Seja bem vindo. Projeto em Construção");
@@ -246,10 +280,9 @@ document.getElementById('inputTxt').addEventListener('change', e => {
     const reader = new FileReader();
     reader.onload = ev => {
         const linhas = ev.target.result.split(/\r?\n/);
-        // Filtra apenas as linhas que contêm dados reais (separados por ;)
         base = linhas.filter(l => l.includes(';'));
         document.getElementById('nomeArquivo').innerText = `Base: ${file.name} (${base.length} registros)`;
-        alert("Aura: Base mapeada com sucesso!");
+        alert("Base mapeada com sucesso!");
     };
     reader.readAsText(file, "UTF-8");
 });
@@ -263,21 +296,22 @@ function buscarCliente() {
 
     const p = linhaEncontrada.split(';');
 
-    // MAPEAMENTO BASEADO NA SUA STRING REAL
-    const nc = p[0]?.trim();                // Posição 0
-    const nome = p[15]?.trim();              // Posição 15
-    const medidorFull = p[30]?.trim() || ""; // Posição 30
-    const medidor = medidorFull.split('-')[0];
-    const leitura = p[32]?.trim() || "0";    // Posição 32
-    const media = p[33]?.trim() || "0";      // Posição 33
+    // MAPEAMENTO  STRING
+    const nc = p[0]?.trim();                // Posição 0 
+    const nome = p[15]?.trim();              // Posição 15 
+  /*  const medidorFull = p[29]?.trim() || "";
+    const medidor = medidorFull.split('-')[0]; */
+   const medidor = p[29]?.trim() || "";
+    const leitura = p[32]?.trim() || "0";    // Posição 32 
+    const media = p[33]?.trim() || "0";      // Posição 33 
     const nova = (parseInt(leitura) || 0) + (parseInt(media) || 0);
     
     // CAMPOS ADICIONAIS
-    const procEntrega = p[18]?.trim() || "CORTADO/VAZIO"; // Posição 25 na sua string
-    const codPrincipal = p[6]?.trim() || "000";          // Posição 6
-    const codSecundario = p[48]?.trim() || "000";        // Posição 48
-    const lat = p[49]?.trim() || "";                     // Posição 49
-    const lng = p[50]?.trim() || "";                     // Posição 50
+    const procEntrega = p[18]?.trim();       // Posição 25 
+    const codPrincipal = p[6]?.trim() || "000"; // Posição 6 
+    const codSecundario = p[48]?.trim() || "000"; // Posição 48 
+    const lat = p[49]?.trim() || "";         // Posição 49 
+    const lng = p[50]?.trim() || "";         // Posição 50 
 
     // PREENCHIMENTO DO PAINEL
     document.getElementById("nomeCliente").innerText = nome;
@@ -286,11 +320,14 @@ function buscarCliente() {
     document.getElementById("valULeitura").innerText = leitura;
     document.getElementById("valMediaAnt").innerText = media;
     document.getElementById("valNova").innerText = nova;
-    document.getElementById("valProcEntrega").innerText = procEntrega === "" ? "CORTADO" : procEntrega;
+    
+    // Tratativa para o Procedimento de Entrega (Vazio se for Cortado)
+    document.getElementById("valProcEntrega").innerText = (!procEntrega || procEntrega === "") ? "EMAIL OU CORTADO" : procEntrega;
+    
     document.getElementById("valCodPrincipal").innerText = codPrincipal;
     document.getElementById("valCodSecundario").innerText = codSecundario;
 
-    // CONFIGURAÇÃO DO LINK DAS COORDENADAS
+    // LINK DAS COORDENADAS REATIVADO
     const elCoord = document.getElementById("valCoord");
     if (lat && lng) {
         elCoord.innerText = `${lat}, ${lng}`;
@@ -300,18 +337,18 @@ function buscarCliente() {
         elCoord.onclick = () => {
             const latFix = lat.replace(',', '.');
             const lngFix = lng.replace(',', '.');
-            window.open(`https://www.google.com/maps?q=${latFix},${lngFix}`, '_blank');
+            window.open(`https://www.google.com/maps/search/?api=1&query=${latFix},${lngFix}`, '_blank');
         };
     } else {
         elCoord.innerText = "Não disponível";
         elCoord.onclick = null;
-        elCoord.style.textDecoration = "none";
     }
 
     document.getElementById("painelCliente").style.display = "block";
     document.getElementById("painelCliente").dataset.nc = nc;
     renderHistoricoCliente(nc);
 }
+
 
 function aplicarMedia() {
             const painel = document.getElementById('painelCliente');
@@ -388,6 +425,56 @@ renderHistoricoCliente(c.nc);
 } */
 
 
+function abrirBloco(){
+document.getElementById("blocoNotas").style.display="block";
+const salvo = localStorage.getItem("notasAura") || "";
+document.getElementById("areaNotas").value = salvo;
+}
+
+function fecharBloco(){
+document.getElementById("blocoNotas").style.display="none";
+}
+
+function salvarNotas(){
+const texto = document.getElementById("areaNotas").value;
+localStorage.setItem("notasAura", texto);
+alert("Anotações salvas");
+}
+
+function abrirTelefone(){
+alert("Função futura");
+}
+
     </script>
+<div id="blocoNotas" style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.95);
+z-index:9999;
+padding:20px;
+">
+
+<div style="max-width:600px;margin:auto">
+
+<h3 style="color:#3b82f6;margin-bottom:10px;">📃 BLOCO DE NOTAS</h3>
+
+<textarea id="areaNotas" style="
+width:100%;
+height:300px;
+background:#020617;
+color:#fff;
+border:1px solid #334155;
+border-radius:10px;
+padding:10px;
+font-size:14px;
+"></textarea>
+
+<div style="margin-top:10px;display:flex;gap:10px;">
+<button class="btn btn-apply" onclick="salvarNotas()">💾 SALVAR</button>
+<button class="btn btn-search" onclick="fecharBloco()">FECHAR</button>
+</div>
+</div>
+</div>
 </body>
 </html>
