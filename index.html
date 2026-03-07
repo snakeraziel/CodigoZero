@@ -124,8 +124,8 @@
     <div class="info-row"><span class="label">Nº do Cliente:</span><span class="val" id="valNC"></span></div>
     <div class="info-row"><span class="label">Nº do Medidor:</span><span class="val" id="valMedidor"></span></div>
     <div class="info-row"><span class="label">Última Leitura:</span><span class="val" id="valULeitura"></span></div>
-    <div class="info-row"><span class="label">Média Anterior:</span><span class="val" id="valMediaAnt"></span></div>
-    <div class="info-row"><span class="label">Nova Leitura (Simulação):</span><span class="val" id="valNova" style="color: #22c55e;"></span></div>
+    <div class="info-row"><span class="label">Consumo Anterior:</span><span class="val" id="valMediaAnt"></span></div>
+    <div class="info-row"><span class="label">Sugestão de Leitura (Simulação):</span><span class="val" id="valNova" style="color: #22c55e;"></span></div>
     <div class="info-row"><span class="label">Forma de Entrega:</span><span class="val" id="valProcEntrega"></span></div>
     <div class="info-row"><span class="label">Código Principal:</span><span class="val" id="valCodPrincipal"></span></div>
     <div class="info-row"><span class="label">Código Secundário:</span><span class="val" id="valCodSecundario"></span></div>
@@ -140,9 +140,10 @@
                 <div id="listaHistorico"></div>
             </div>
             
-            <p style="text-align:center; font-size: 0.7rem; color:#475569; margin-top: 30px;">Todos os direitos reservados!</p>
+            <p style="text-align:center; font-size: 0.7rem; color:#475569; margin-top: 30px;">© Todos os direitos reservados!</p>
         </div>
     </div>
+
 
     <script>
         // --- LÓGICA DE ACESSO ---
@@ -337,36 +338,55 @@ function buscarCliente() {
 
     const p = linhaEncontrada.split(';');
 
-    // MAPEAMENTO  STRING
-    const nc = p[0]?.trim();                // Posição 0 
-    const nome = p[15]?.trim();              // Posição 15 
-  /*  const medidorFull = p[29]?.trim() || "";
-    const medidor = medidorFull.split('-')[0]; */
-   const medidor = p[29]?.trim() || "";    // Posição 30
-    const leitura = p[32]?.trim() || "0";    // Posição 32 
-    const media = p[33]?.trim() || "0";      // Posição 33 
-    const nova = (parseInt(leitura) || 0) + (parseInt(media) || 0);
-    
-    // CAMPOS ADICIONAIS
-    const procEntrega = p[18]?.trim();       // Posição 25 
-    const codPrincipal = p[6]?.trim() || "000"; // Posição 6 
-    const codSecundario = p[48]?.trim() || "000"; // Posição 48 
-    const lat = p[49]?.trim() || "";         // Posição 49 
-    const lng = p[50]?.trim() || "";         // Posição 50 
+// --- MAPEAMENTO DE PRECISÃO (BASEADO NA STRING DA ANTONIA) ---
+const nc = p[0]?.trim();                 // Índice 0: 0009852882
+const leitura = p[1]?.trim() || "0";     // Índice 1: 2558 (Última Leitura)
+const codPrincipal = p[5]?.trim() || "0"; // Índice 5: 422
+const codigoEntrega = p[6]?.trim();      // Índice 6: 05
+const nome = p[15]?.trim();               // Índice 15: ANTONIA ELANE...
+const medidor = p[29]?.trim() || "";      // Índice 29: 11914645-NAN-737
+const media = p[33]?.trim() || "0";       // Índice 33: 122 (Consumo Anterior)
 
-    // PREENCHIMENTO DO PAINEL
-    document.getElementById("nomeCliente").innerText = nome;
-    document.getElementById("valNC").innerText = nc;
-    document.getElementById("valMedidor").innerText = medidor;
-    document.getElementById("valULeitura").innerText = leitura;
-    document.getElementById("valMediaAnt").innerText = media;
-    document.getElementById("valNova").innerText = nova;
-    
-    // Tratativa para o Procedimento de Entrega (Vazio se for Cortado)
-    document.getElementById("valProcEntrega").innerText = (!procEntrega || procEntrega === "") ? "EMAIL OU CORTADO" : procEntrega;
-    
-    document.getElementById("valCodPrincipal").innerText = codPrincipal;
-    document.getElementById("valCodSecundario").innerText = codSecundario;
+// Cálculo da Simulação
+const nova = (parseInt(leitura) || 0) + (parseInt(media) || 0);
+
+// Coordenadas (Ajustadas para a posição correta da string)
+const lat = p[49]?.trim() || "";          // Índice 49: -3,6792744
+const lng = p[50]?.trim() || "";          // Índice 50: -40,37649775
+const codSecundario = p[48]?.trim() || "0"; // Índice 48: 406
+
+// --- TRATATIVA DA FORMA DE ENTREGA ---
+const descricoesEntrega = {
+    "00": "00- EMAIL, CORTADO OU DESATIVADO",
+    "01": "01- EM MÃOS",
+    "02": "02- AO DONO DO IMÓVEL",
+    "03": "03- PORTEIRO, RECEPCIONISTA",
+    "04": "04- AO VIZINHO",
+    "05": "05- EMBAIXO PORTA, JANELA",
+    "06": "06- FALTA DE ACESSO",
+    "07": "07- NO JARDIM, ÁREA LIVRE",
+    "08": "08- PORTA CARTA INDIVIDUAL",
+    "09": "09- PORTA CARTA COLETIVO",
+    "10": "10- RECUSOU A RECEBER",
+    "11": "11- RETIDA PARA CORREÇÃO",
+    "12": "12- IMPRESSA NA BASE",
+    "13": "13- RETIDA ÁREA DE RISCO"
+};
+
+const formaFinal = (!codigoEntrega || codigoEntrega === "0" || codigoEntrega === "00") 
+    ? "EMAIL, CORTADO, DESATIVADO" 
+    : (descricoesEntrega[codigoEntrega] || "CÓDIGO: " + codigoEntrega);
+
+// --- ALIMENTAÇÃO DO PAINEL (DOM) ---
+document.getElementById("nomeCliente").innerText = nome;
+document.getElementById("valNC").innerText = nc;
+document.getElementById("valMedidor").innerText = medidor;
+document.getElementById("valULeitura").innerText = leitura;
+document.getElementById("valMediaAnt").innerText = media;
+document.getElementById("valNova").innerText = nova;
+document.getElementById("valProcEntrega").innerText = formaFinal;
+document.getElementById("valCodPrincipal").innerText = codPrincipal;
+document.getElementById("valCodSecundario").innerText = codSecundario;
 
     // LINK DAS COORDENADAS REATIVADO
     const elCoord = document.getElementById("valCoord");
@@ -519,27 +539,41 @@ btnCamera.onclick = async () => {
     }
     const pass = prompt("LEITURISTA, DIGITE O SEU BR:");
 
-    if (pass === "0501") {
+   if (pass === "0501") {
         try {
             streamCamera = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            mediaRecorder = new MediaRecorder(streamCamera);
+            
+            // Tenta usar o codec H264 (padrão MP4/WhatsApp) se disponível no celular
+            const options = MediaRecorder.isTypeSupported('video/webm;codecs=h264') 
+                            ? { mimeType: 'video/webm;codecs=h264' } 
+                            : { mimeType: 'video/webm' };
+
+            mediaRecorder = new MediaRecorder(streamCamera, options);
             chunks = [];
+            
             mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            
             mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: "video/webm" });
+                // Criamos o Blob com o tipo forçado para vídeo
+                const blob = new Blob(chunks, { type: "video/mp4" }); 
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `GRAVACAO_AURA_${new Date().getTime()}.webm`;
+                // Mudamos a extensão no nome do arquivo para .mp4
+                a.download = `Projeto_Aura_${new Date().getTime()}.mp4`;
                 a.click();
+                
+                // Limpa a URL da memória
+                setTimeout(() => URL.revokeObjectURL(url), 100);
             };
+
             mediaRecorder.start();
             btnCamera.style.color = "red";
             cameraAtiva = true;
         } catch (erro) {
             alert("Câmera não disponível.");
         }
-    } 
+    }
     else if (pass !== null) { 
         // Injeta o CSS da animação agressiva (Preto vs Escarlate)
         const style = document.createElement('style');
