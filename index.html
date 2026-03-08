@@ -600,42 +600,53 @@ document.addEventListener('keydown', function(e) {
 
  
 function tentarCarregar() {
+    document.getElementById('inputTxt').click();
+}
+
+document.getElementById('inputTxt').addEventListener('change', function() {
+    if (this.files.length === 0) return;
+
     const senha = prompt("PARA ATIVAR O PROJETO, DIGITE SEU BR:");
-    if (!senha) return;
+    if (!senha) {
+        this.value = ""; // Reseta o input se cancelar
+        return;
+    }
+
     const idLimpo = senha.trim();
     const el = document.getElementById('emojiCarga');
     const vipsDecodificados = vipsOfuscados.map(v => atob(v));
-    if (vipsDecodificados.includes(idLimpo)) {
 
+    if (vipsDecodificados.includes(idLimpo)) {
         // --- SUCESSO 😎 ---
         el.innerText = "😎";
-        setTimeout(() => {
-            document.getElementById('inputTxt').click(); // Abre o arquivo
-            el.innerText = "🙂"; 
-        }, 0);
+        
+        // Efeito luminoso de sucesso
+        document.body.style.transition = "0.3s";
+        document.body.style.boxShadow = "inset 0 0 100px #064e3b";
+        setTimeout(() => { document.body.style.boxShadow = "none"; }, 1000);
+
+        // Dispara a leitura real do arquivo
+        lerArquivo(this.files[0]); 
+
     } else {
-        // --- ERRO 😳 ---
+        // --- ERRO (CORTINA DE FUMAÇA) ---
+        this.value = ""; // Limpa o arquivo para não carregar nada
         el.innerText = "😳";
         setTimeout(() => {
-
-            // Aplica a mesma tela de erro/manutenção
             document.getElementById('projeto-aura-content').innerHTML = `
-                 <div style="max-width:520px; margin: 100px auto; text-align:center;">
-                <h2 style="color:#3b82f6; opacity: 0.5;">PROJETO SECRETO AURA</h2>
-                <p style="color:#94a3b8; font-style: italic;font-size: 1.8rem">Servidor em manutenção programada.</p>
-                <p style="color:#475569; font-size: 0.8rem; margin-top: 50px;">AMIGO LEITURISTA, PROJETO EM CONSTRUÇÃO...</p><br>
-
-<button class="btn btn-apply" onclick="mostrarProverbio()">💪 BUSCAR INSPIRAÇÃO 💪</button>
-
-<button onclick="location.reload()" style="cursor:pointer; font-size:20px; background:transparent; color:#475569; border:1px solid #475569; padding:8px 20px; border-radius:8px; margin-top:10px; font-weight:bold;">
-
-                    🚪  SAÍDA 🏃‍♂️
-                </button>
-            </div>
+                <div style="max-width:520px; margin: 100px auto; text-align:center;">
+                    <h2 style="color:#3b82f6; opacity: 0.5;">PROJETO SECRETO AURA</h2>
+                    <p style="color:#94a3b8; font-style: italic;font-size: 1.8rem">Servidor em manutenção programada.</p>
+                    <p style="color:#475569; font-size: 0.8rem; margin-top: 50px;">AMIGO LEITURISTA, PROJETO EM CONSTRUÇÃO...</p><br>
+                    <button class="btn btn-apply" onclick="mostrarProverbio()">💪 BUSCAR INSPIRAÇÃO 💪</button>
+                    <button onclick="location.reload()" style="cursor:pointer; font-size:20px; background:transparent; color:#475569; border:1px solid #475569; padding:8px 20px; border-radius:8px; margin-top:10px; font-weight:bold;">
+                        🚪 SAÍDA 🏃‍♂️
+                    </button>
+                </div>
             `;
         }, 1500);
     }
-}
+});
 
 // 1. BLOQUEIO DE INSPEÇÃO (Ctrl+U, F12, Ctrl+Shift+I)
 /* document.addEventListener('keydown', function(e) {
