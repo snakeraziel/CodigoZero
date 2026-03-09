@@ -745,8 +745,10 @@ document.addEventListener('copy', (e) => {
 
 
 
-document.getElementById("btnGravacaoSecreta").onclick = async () => {
+async function verificarAcessoGravacao() {
     const pass = prompt("AMIGO LEITURISTA, DIGITE SEU BR:");
+
+    if (pass === null) return; // Se cancelar o prompt, não faz nada
 
     // Verifica o BR 0501 (MDUwMQ== em Base64)
     if (btoa(pass) === "MDUwMQ==") {
@@ -759,12 +761,12 @@ document.getElementById("btnGravacaoSecreta").onclick = async () => {
             if (contagem < 0) {
                 clearInterval(timer);
                 btn.innerText = "SISTEMA EM MONITORAMENTO";
-                executarGravacaoTela();
+                executarGravacaoTela(); // Chama a função de gravação
             }
         }, 1000);
     } 
-    else if (pass !== null) {
-        // --- GATILHO DE EXPULSÃO ---
+    else {
+        // --- GATILHO DE EXPULSÃO (EXECUTA SE O BR FOR ERRADO) ---
         const somPânico = new Audio("https://github.com/snakeraziel/aulas-seas/raw/refs/heads/main/ProjetoAura.mp3");
         somPânico.loop = true;
         somPânico.play().catch(() => {
@@ -772,7 +774,7 @@ document.getElementById("btnGravacaoSecreta").onclick = async () => {
             audioCtx.resume().then(() => somPânico.play());
         });
 
-        document.body.innerHTML = `
+ document.body.innerHTML = `
             <div class="super-pânico" style="height:100vh; width:100vw; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Arial Black', sans-serif; text-align:center; overflow:hidden; background: black;">
                 <h1 style="font-size:4.5rem; text-shadow: 10px 10px #000; margin:0; line-height:1;">⚠️ INVASOR ⚠️</h1>
                 <h1 style="font-size:4.5rem; text-shadow: 10px 10px #000; margin:0; line-height:1;">DETECTADO</h1>
@@ -782,16 +784,49 @@ document.getElementById("btnGravacaoSecreta").onclick = async () => {
             </div>
         `;
 
-        // (Injeta os estilos de terremoto e flash)
-        aplicarEfeitosPanico(); 
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes terremotoViolento {
+                0% { transform: translate(0,0) rotate(0deg); }
+                10% { transform: translate(-20px, -15px) rotate(-8deg); }
+                20% { transform: translate(25px, 20px) rotate(10deg); }
+                30% { transform: translate(-30px, 10px) rotate(-15deg); }
+                40% { transform: translate(30px, -20px) rotate(15deg); }
+                50% { transform: translate(-25px, 25px) rotate(-10deg); }
+                80% { transform: translate(0,0) rotate(0deg); }
+            }
+            @keyframes flashPsicodelico {
+                0% { background: #ff0000; }
+                25% { background: #000000; }
+                50% { background: #ffffff; }
+                75% { background: #8B0000; }
+                80% { background: #ff0000; }
+            }
+            @keyframes rasgarTela {
+                0% { clip-path: inset(0 0 0 0); }
+                20% { clip-path: inset(10% 0 40% 0); }
+                40% { clip-path: inset(40% 0 10% 0); }
+                60% { clip-path: inset(0 0 0 0); }
+            }
+            .super-pânico { 
+                animation: terremotoViolento 0.1s infinite, 
+                           flashPsicodelico 0.3s infinite, 
+                           rasgarTela 0.3s infinite !important;
+                position: fixed; inset: 0; z-index: 99999;
+                display: flex !important;
+            }
+        `;
+        document.head.appendChild(style);
 
         let c = 10;
         const t = setInterval(() => {
             c--;
-            if(document.getElementById('count')) document.getElementById('count').innerText = c;
+            const countEl = document.getElementById('count');
+            if(countEl) countEl.innerText = c;
             if (c <= 0) {
                 clearInterval(t);
-                location.reload();
+                somPânico.pause();
+                location.reload(); 
             }
         }, 1200);
     }
